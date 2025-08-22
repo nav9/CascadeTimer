@@ -44,9 +44,13 @@ body {
 .app-title {
     font-size: 1.5rem;
     font-family: 'Orbitron', sans-serif;
-    margin: 0;
+    margin: 0 0 0 10px;
     color: var(--accent-color);
     font-weight: 700;
+}
+.title-container {
+    display: flex;
+    align-items: center;
 }
 
 #main-controls {
@@ -103,6 +107,11 @@ body {
 }
 .cascade.active {
     display: block;
+    animation: fadeIn 0.5s;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .cascade-header {
@@ -148,7 +157,7 @@ body {
 .timer-widget.active {
     opacity: 1;
     transform: scale(1);
-    border-color: var(--accent-color);
+    border-left: 5px solid var(--accent-color);
     box-shadow: 0 0 15px rgba(0, 170, 255, 0.3);
 }
 
@@ -162,35 +171,25 @@ body {
     font-size: 0.8rem;
     color: var(--inactive-color);
     margin-bottom: 10px;
+    white-space: pre-wrap;
 }
 
 .timer-display {
     font-family: 'Orbitron', sans-serif;
-    font-size: 2.5rem;
+    font-size: clamp(1.8rem, 8vw, 2.5rem);
     font-weight: 700;
     text-align: center;
     letter-spacing: 2px;
     color: var(--text-color);
     margin: 10px 0;
-    text-shadow: 0 0 10px var(--accent-color);
+    text-shadow: 0 0 5px rgba(0, 170, 255, 0.7);
 }
 
 .timer-controls {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
-}
-
-.timer-controls .dropdown-menu {
-    background-color: var(--primary-widget-bg);
-    border: 1px solid var(--border-color);
-}
-.timer-controls .dropdown-item {
-    color: var(--text-color);
-}
-.timer-controls .dropdown-item:hover {
-    background-color: var(--secondary-widget-bg);
-    color: var(--accent-color);
+    gap: 10px;
 }
 
 /* --- Modals --- */
@@ -219,27 +218,52 @@ body {
     border-color: var(--accent-color);
     box-shadow: 0 0 5px rgba(0, 170, 255, 0.5);
 }
+.form-control::placeholder {
+    color: var(--inactive-color);
+}
 
 .timer-editor {
     background-color: var(--dark-bg);
-    border: 1px dashed var(--border-color);
+    border: 1px solid var(--border-color);
     padding: 15px;
     border-radius: 5px;
     margin-bottom: 15px;
     cursor: grab;
+    position: relative;
+}
+.timer-editor:active {
+    cursor: grabbing;
+    border-color: var(--accent-color);
+}
+.timer-editor .form-label {
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.timer-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.timer-editor-header .form-group {
+    flex-grow: 1;
 }
 
 .time-input-group {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
+    margin-top: 10px;
 }
 .time-input-container {
     text-align: center;
 }
 .time-input-group input {
-    width: 50px;
+    width: 60px;
     text-align: center;
+    font-family: 'Orbitron', sans-serif;
 }
 .time-spinner-btn {
     font-size: 0.8rem;
@@ -249,7 +273,22 @@ body {
     background: var(--secondary-widget-bg);
     border: none;
     color: var(--text-color);
+    display: block;
+    width: 100%;
 }
+.time-spinner-btn:hover {
+    background: var(--border-color);
+}
+
+/* Draggable placeholder style */
+.timer-editor-placeholder {
+    border: 2px dashed var(--accent-color);
+    background-color: rgba(0, 170, 255, 0.1);
+    height: 100px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+}
+
 
 /* Logs Modal */
 .accordion-item {
@@ -270,7 +309,16 @@ body {
 .log-entry {
     font-family: 'Courier New', Courier, monospace;
     font-size: 0.9rem;
+    border-bottom: 1px solid var(--border-color);
+    padding: 4px 0;
+}
+.log-entry:last-child {
+    border-bottom: none;
 }
 .log-info { color: var(--log-info); }
 .log-warn { color: var(--log-warn); }
 .log-error { color: var(--log-error); }
+.log-timestamp {
+    color: var(--inactive-color);
+    margin-right: 10px;
+}
