@@ -1,14 +1,13 @@
-/* Import Sci-Fi Font */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-
+/* --- Color and Font Configuration --- */
 :root {
-    --dark-bg: #1a1a1a;
-    --primary-widget-bg: #2c2c2c;
-    --secondary-widget-bg: #383838;
-    --border-color: #4a4a4a;
+    --dark-bg: #1f2428;
+    --primary-widget-bg: #282c34;
+    --secondary-widget-bg: #3a4049;
+    --border-color: #4a515c;
     --text-color: #e0e0e0;
-    --accent-color: #00aaff;
-    --inactive-color: #6c757d;
+    --accent-color: #00ff7f; /* Vibrant Green */
+    --inactive-color: #8892a0;
+    --danger-color: #ff4d4d;
     --log-info: #cccccc;
     --log-warn: #ffc107;
     --log-error: #dc3545;
@@ -19,56 +18,48 @@ body {
     color: var(--text-color);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
-    padding-top: 60px; /* Space for the sticky header */
+    padding-top: 105px; /* Space for the sticky header */
 }
 
 /* --- Main Header --- */
 #main-header {
     background-color: var(--primary-widget-bg);
-    padding: 8px 0;
+    padding: 8px 15px;
     border-bottom: 1px solid var(--border-color);
     box-shadow: 0 2px 10px rgba(0,0,0,0.5);
     z-index: 1030;
 }
-
-.header-container {
-    max-width: 600px;
-    margin: 0 auto;
+.header-top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 15px;
-    transition: max-width 0.3s ease-in-out;
+    margin-bottom: 8px;
 }
-
 .app-title {
-    font-size: 1.5rem;
-    font-family: 'Orbitron', sans-serif;
-    margin: 0 0 0 10px;
+    font-size: 1.6rem;
+    font-weight: bold;
+    margin: 0;
     color: var(--accent-color);
-    font-weight: 700;
 }
-.title-container {
-    display: flex;
-    align-items: center;
-}
-
 #main-controls {
     display: flex;
+    justify-content: center;
     gap: 10px;
+    background-color: var(--dark-bg);
+    padding: 5px;
+    border-radius: 5px;
 }
 
+/* --- Generic UI Elements --- */
 .icon-btn {
     background: none;
     border: none;
     color: var(--text-color);
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     padding: 5px 10px;
     border-radius: 5px;
     transition: background-color 0.2s ease, color 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
-
 .icon-btn:hover, .icon-btn:focus {
     background-color: var(--secondary-widget-bg);
     color: var(--accent-color);
@@ -76,25 +67,36 @@ body {
 .icon-btn:disabled {
     color: var(--inactive-color);
     cursor: not-allowed;
-    box-shadow: none;
+}
+.icon-btn-danger:hover {
+    color: var(--danger-color);
 }
 .dropdown .icon-btn {
+    font-size: 1rem;
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 1rem;
+}
+.dropdown-menu {
+    background-color: var(--primary-widget-bg);
+    border: 1px solid var(--border-color);
+}
+.dropdown-item {
+    color: var(--text-color);
+}
+.dropdown-item:hover, .dropdown-item:focus {
+    background-color: var(--secondary-widget-bg);
+    color: var(--accent-color);
 }
 
 /* --- Main Content & Cascade --- */
 #main-content {
     padding: 20px 15px;
 }
-
 #welcome-message {
     margin-top: 50px;
     color: var(--inactive-color);
 }
-
 .cascade {
     background-color: var(--primary-widget-bg);
     border: 1px solid var(--border-color);
@@ -103,17 +105,9 @@ body {
     margin: 20px auto;
     overflow: hidden;
     box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-    display: none; /* Hidden by default */
+    display: none;
 }
-.cascade.active {
-    display: block;
-    animation: fadeIn 0.5s;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
+.cascade.active { display: block; }
 .cascade-header {
     display: flex;
     justify-content: space-between;
@@ -121,23 +115,15 @@ body {
     background-color: var(--secondary-widget-bg);
     padding: 10px 15px;
     border-bottom: 1px solid var(--border-color);
-    position: sticky;
-    top: 58px; /* Height of main header */
-    z-index: 1020;
 }
-
 .cascade-title {
     font-size: 1.2rem;
     font-weight: bold;
     margin: 0;
 }
-.cascade-title .ordinal {
-    color: var(--accent-color);
-    margin-right: 10px;
-}
-
+.cascade-title .ordinal { color: var(--accent-color); margin-right: 10px; }
 .cascade-body {
-    padding: 10px;
+    padding: 15px;
     max-height: 70vh;
     overflow-y: auto;
 }
@@ -148,177 +134,61 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 15px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     transition: all 0.3s ease-in-out;
-    opacity: 0.5;
-    transform: scale(0.98);
+    opacity: 0.6;
 }
-
 .timer-widget.active {
     opacity: 1;
-    transform: scale(1);
-    border-left: 5px solid var(--accent-color);
-    box-shadow: 0 0 15px rgba(0, 170, 255, 0.3);
+    background-color: #323841; /* Slightly lighter bg */
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(0, 255, 127, 0.4);
 }
-
-.timer-title {
-    font-size: 1.1rem;
-    font-weight: bold;
-    margin: 0;
-}
-
-.timer-description {
-    font-size: 0.8rem;
-    color: var(--inactive-color);
-    margin-bottom: 10px;
-    white-space: pre-wrap;
-}
-
+.timer-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
 .timer-display {
-    font-family: 'Orbitron', sans-serif;
-    font-size: clamp(1.8rem, 8vw, 2.5rem);
-    font-weight: 700;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 600;
+    font-size: 2rem;
     text-align: center;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     color: var(--text-color);
-    margin: 10px 0;
-    text-shadow: 0 0 5px rgba(0, 170, 255, 0.7);
+    margin-bottom: 15px;
 }
-
-.timer-controls {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 10px;
-}
+.timer-controls { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
 
 /* --- Modals --- */
-.modal-content {
-    background-color: var(--primary-widget-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-}
-.modal-header, .modal-footer {
-    border-bottom-color: var(--border-color);
-    border-top-color: var(--border-color);
-}
-.btn-close {
-    filter: invert(1) grayscale(100%) brightness(200%);
-}
+.modal-content { background-color: var(--primary-widget-bg); color: var(--text-color); border-color: var(--border-color); }
+.modal-header, .modal-footer { border-color: var(--border-color); }
+.btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+.form-control, .form-select { background-color: var(--secondary-widget-bg); color: var(--text-color); border-color: var(--border-color); }
+.form-control:focus, .form-select:focus { border-color: var(--accent-color); box-shadow: 0 0 5px rgba(0, 255, 127, 0.5); }
 
-/* Edit Modal */
-.form-control, .form-select {
-    background-color: var(--secondary-widget-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-}
-.form-control:focus, .form-select:focus {
-    background-color: var(--secondary-widget-bg);
-    color: var(--text-color);
-    border-color: var(--accent-color);
-    box-shadow: 0 0 5px rgba(0, 170, 255, 0.5);
-}
-.form-control::placeholder {
-    color: var(--inactive-color);
-}
-
+/* Edit Modal Specifics */
 .timer-editor {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
     background-color: var(--dark-bg);
     border: 1px solid var(--border-color);
     padding: 15px;
     border-radius: 5px;
     margin-bottom: 15px;
-    cursor: grab;
-    position: relative;
 }
-.timer-editor:active {
-    cursor: grabbing;
-    border-color: var(--accent-color);
-}
-.timer-editor .form-label {
-    font-weight: bold;
-    font-size: 0.9rem;
-}
+.drag-handle { cursor: grab; padding: 10px 5px; color: var(--inactive-color); font-size: 1.5rem; }
+.drag-handle:active { cursor: grabbing; }
+.editor-content { flex-grow: 1; }
+.timer-editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.timer-name-input { font-weight: bold; }
+.delete-timer-btn { color: var(--inactive-color); font-size: 1.1rem; }
+.delete-timer-btn:hover { color: var(--danger-color); }
+.time-input-group { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.time-input-group input[type="number"] { width: 70px; text-align: center; font-weight: bold; }
+.notification-controls { display: flex; align-items: center; gap: 15px; margin-top: 15px; }
 
-.timer-editor-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-.timer-editor-header .form-group {
-    flex-grow: 1;
-}
-
-.time-input-group {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    margin-top: 10px;
-}
-.time-input-container {
-    text-align: center;
-}
-.time-input-group input {
-    width: 60px;
-    text-align: center;
-    font-family: 'Orbitron', sans-serif;
-}
-.time-spinner-btn {
-    font-size: 0.8rem;
-    line-height: 1;
-    padding: 2px 4px;
-    cursor: pointer;
-    background: var(--secondary-widget-bg);
-    border: none;
-    color: var(--text-color);
-    display: block;
-    width: 100%;
-}
-.time-spinner-btn:hover {
-    background: var(--border-color);
-}
-
-/* Draggable placeholder style */
-.timer-editor-placeholder {
-    border: 2px dashed var(--accent-color);
-    background-color: rgba(0, 170, 255, 0.1);
-    height: 100px;
-    margin-bottom: 15px;
-    border-radius: 5px;
-}
-
-
-/* Logs Modal */
-.accordion-item {
-    background-color: var(--dark-bg);
-    border-color: var(--border-color);
-}
-.accordion-button {
-    background-color: var(--secondary-widget-bg);
-    color: var(--text-color);
-}
-.accordion-button:not(.collapsed) {
-    background-color: var(--primary-widget-bg);
-    color: var(--accent-color);
-}
-.accordion-button:focus {
-    box-shadow: 0 0 5px rgba(0, 170, 255, 0.5);
-}
-.log-entry {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 0.9rem;
-    border-bottom: 1px solid var(--border-color);
-    padding: 4px 0;
-}
-.log-entry:last-child {
-    border-bottom: none;
-}
+/* --- Logs Modal --- */
+.accordion-item, .accordion-button { background-color: var(--secondary-widget-bg); color: var(--text-color); }
+.accordion-button:not(.collapsed) { background-color: var(--primary-widget-bg); color: var(--accent-color); }
+.log-entry { font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; }
 .log-info { color: var(--log-info); }
 .log-warn { color: var(--log-warn); }
 .log-error { color: var(--log-error); }
-.log-timestamp {
-    color: var(--inactive-color);
-    margin-right: 10px;
-}
