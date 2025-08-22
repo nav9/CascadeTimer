@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CascadeTimer</title>
+    <!-- Local CSS dependencies -->
+    <link rel="stylesheet" href="lib/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="lib/fontawesome/all.min.css">
+    <link rel="stylesheet" href="lib/jquery/jquery-ui.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-dark text-light">
+    <div class="app-container">
+        <!-- Header Controls -->
+        <header class="app-header">
+            <h1><i class="fas fa-stopwatch"></i> CascadeTimer</h1>
+            <div class="global-controls">
+                <button id="add-series-btn" class="btn btn-success" title="Create a new timer series"><i class="fas fa-plus"></i> New Series</button>
+                <button id="save-all-btn" class="btn btn-primary" title="Save all series to a ZIP file"><i class="fas fa-save"></i> Save All</button>
+                <label for="load-zip-input" class="btn btn-info mb-0" title="Load series from a ZIP file"><i class="fas fa-folder-open"></i> Load</label>
+                <input type="file" id="load-zip-input" accept=".zip" style="display: none;">
+            </div>
+        </header>
+
+        <!-- Main content area for timer series -->
+        <main id="timer-series-container" class="timer-series-container"></main>
+
+        <!-- No series placeholder -->
+        <div id="no-series-placeholder" class="text-center p-5">
+            <h2>No Timer Series Found</h2>
+            <p>Click "New Series" to get started or "Load" to import from a file.</p>
+        </div>
+    </div>
+
+    <!-- Audio Player -->
+    <audio id="notification-sound" preload="auto"></audio>
+
+    <!-- Templates (Hidden) -->
+    <template id="edit-timer-item-template">
+        <li class="list-group-item edit-timer-item d-flex align-items-center">
+            <span class="drag-handle me-2"><i class="fas fa-grip-vertical"></i></span>
+            <input type="text" class="form-control form-control-dark me-2 timer-name-input" placeholder="Timer Name">
+            <input type="text" class="form-control form-control-dark me-2 timer-duration-input" placeholder="dd:hh:mm:ss" style="width: 150px;">
+            <select class="form-select form-control-dark me-2 timer-sound-select" style="width: 180px;"></select>
+            <button class="btn btn-danger btn-sm remove-timer-btn"><i class="fas fa-trash"></i></button>
+        </li>
+    </template>
+
+    <!-- Toast Notification Container for non-intrusive feedback -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100"></div>
+
+    <!-- Local JS dependencies -->
+    <script src="lib/jquery/jquery.min.js"></script>
+    <script src="lib/jquery/jquery-ui.min.js"></script>
+    <script src="lib/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="lib/jszip/jszip.min.js"></script>
+    <!-- Custom application logic -->
+    <script src="js/app.js"></script>
+</body>
+</html>

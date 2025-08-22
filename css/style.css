@@ -1,0 +1,147 @@
+/* General Body and Theme */
+body {
+    background-color: #212529;
+    color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styles */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #495057;
+    padding-bottom: 1rem;
+}
+
+.app-header h1 {
+    color: #20c997;
+}
+
+/* Timer Series Styles */
+.timer-series-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 20px;
+    padding-bottom: 15px;
+}
+
+.timer-series {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    background-color: #343a40;
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid #495057;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.series-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.series-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Timer Item Styles */
+.timers-list {
+    list-style: none;
+    padding: 0;
+}
+
+.timer-item {
+    background-color: #495057;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    border-left: 5px solid transparent;
+}
+
+.timer-item.active {
+    background-color: #2a634e;
+    border-left-color: #20c997;
+    box-shadow: 0 0 15px rgba(32, 201, 151, 0.4);
+}
+
+.timer-name {
+    flex-grow: 1;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.timer-countdown {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #20c997;
+    min-width: 280px;
+    text-align: center;
+}
+
+.timer-item.paused .timer-countdown {
+    color: #ffc107;
+}
+
+.timer-controls button {
+    margin-left: 5px;
+}
+
+/* Edit Mode Styles */
+.edit-mode .timer-item {
+    cursor: grab;
+}
+
+.edit-mode .timer-controls {
+    display: none;
+}
+
+.edit-mode .edit-controls {
+    display: flex;
+}
+
+.edit-controls {
+    display: none;
+    align-items: center;
+}
+
+/* Scrollbar styling */
+.timer-series-container::-webkit-scrollbar {
+    height: 10px;
+}
+.timer-series-container::-webkit-scrollbar-track {
+    background: #2c3034;
+}
+.timer-series-container::-webkit-scrollbar-thumb {
+    background-color: #20c997;
+    border-radius: 10px;
+}
+
+/* Utility classes */
+.form-control-dark {
+    background-color: #495057;
+    border-color: #6c757d;
+    color: #fff;
+}
+.form-control-dark:focus {
+    background-color: #495057;
+    border-color: #20c997;
+    color: #fff;
+    box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.5);
+}
