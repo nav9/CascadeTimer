@@ -1,608 +1,80 @@
-
-// const soundLibrary = {
-//     'default': 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1Bpbmdlci8yAAAAAmluZm8AAAAPAAAADAA2ADgAOAA1ADYAOQA1ADgANgA0ADUAOQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
-//     'alert': 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1Bpbmdlci8yAAAAAmluZm8AAAAPAAAADgA3ADkAOAA2ADgANgA5ADYANAA1ADgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
-//     'chime': 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1Bpbmdlci8yAAAAAmluZm8AAAAPAAAAEAA5ADgANgA0ADUAOAA2ADgANgA0ADUAOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
-//     'signal': 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1Bpbmdlci8yAAAAAmluZm8AAAAPAAAAEgA1ADgANgA0ADUAOAA2ADgANgA0ADUAOAA2AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
-// };
-
-$(document).ready(function () {
-    // --- Application State and Configuration ---
+$(document).ready(function() {
     let appState = {
         cascades: [],
         activeCascadeIndex: -1,
         globalMute: false,
         logs: { system: [] }
     };
+    const soundLibrary = { 'Mute': null, 'Default': 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU9vT19JTklT', 'Alert': 'data:audio/wav;base64,UklGRqRoT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YaxoT19JTklT', 'Chime': 'data:audio/wav;base64,UklGRjRpT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQhpT19JTklT', 'Signal': 'data:audio/wav;base64,UklGRoZoT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQZoT19JTklT' };
+    const logger = { log: function(cascadeId = 'system', message, type = 'info') { try { if (!appState.logs[cascadeId]) appState.logs[cascadeId] = []; const timestamp = new Date().toISOString(); appState.logs[cascadeId].push({ timestamp, message, type }); if (appState.logs[cascadeId].length > 200) appState.logs[cascadeId].shift(); } catch (e) { console.error("Logging failed:", e); } } };
+    function showConfirmation(title, body, onConfirm) { $('#confirmationModalLabel').text(title); $('#confirmationModalBody').text(body); $('#confirm-action-btn').off('click').on('click', () => { onConfirm(); bootstrap.Modal.getInstance($('#confirmationModal')).hide(); }); new bootstrap.Modal($('#confirmationModal')).show(); }
+    class Timer { constructor(config = {}) { this.id = config.id || `timer-${Date.now()}-${Math.floor(Math.random() * 1000)}`; this.name = config.name || 'New Timer'; this.setDuration = config.setDuration || { d: 0, h: 0, m: 0, s: 0 }; this.remainingTime = this.getTotalSeconds(config.remainingTime ? null : this.setDuration, config.remainingTime); this.state = config.state || 'idle'; this.intervalId = null; this.notification = config.notification || { sound: 'Default', repeats: 1, tts: false }; } getTotalSeconds(duration, explicitSeconds) { if (explicitSeconds !== undefined) return explicitSeconds; if (!duration) return 0; return (duration.d * 86400) + (duration.h * 3600) + (duration.m * 60) + duration.s; } }
+    class Cascade { constructor(config = {}) { this.id = config.id || `cascade-${Date.now()}-${Math.floor(Math.random() * 1000)}`; this.name = config.name || `Cascade ${appState.cascades.length + 1}`; this.timers = (config.timers ? config.timers.map(t => new Timer(t)) : [new Timer({ name: 'Timer 1' })]); this.activeTimerIndex = config.activeTimerIndex || 0; this.repeat = config.repeat || false; } }
+    
+    // --- Initialization & Permissions ---
+    function init() { loadState(); renderFAQ(); renderAll(); bindGlobalEvents(); requestNotificationPermission(); logger.log('system', 'Application initialized.', 'info'); }
+    function requestNotificationPermission() { if ('Notification' in window && Notification.permission !== 'granted') Notification.requestPermission(); }
 
-    const soundLibrary = {
-        'Mute': null,
-        'default': 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1Bpbmdlci8yAAAAAmluZm8AAAAPAAAADAA2ADgAOAA1ADYAOQA1ADgANgA0ADUAOQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
-        'alert': 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1Bpbmdlci8yAAAAAmluZm8AAAAPAAAADgA3ADkAOAA2ADgANgA5ADYANAA1ADgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
-        'chime': 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1Bpbmdlci8yAAAAAmluZm8AAAAPAAAAEAA5ADgANgA0ADUAOAA2ADgANgA0ADUAOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
-        'signal': 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1Bpbmdlci8yAAAAAmluZm8AAAAPAAAAEgA1ADgANgA0ADUAOAA2ADgANgA0ADUAOAA2AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
-    };
-
-    // --- Logger ---
-    const logger = {
-        log: function (cascadeId = 'system', message, type = 'info') {
-            try {
-                if (!appState.logs[cascadeId]) appState.logs[cascadeId] = [];
-                const timestamp = new Date().toISOString();
-                appState.logs[cascadeId].push({ timestamp, message, type });
-                if (appState.logs[cascadeId].length > 200) appState.logs[cascadeId].shift();
-            } catch (e) { console.error("Logging failed:", e); }
-        }
-    };
-
-    // --- Confirmation Modal Helper ---
-    function showConfirmation(title, body, onConfirm) {
-        $('#confirmationModalLabel').text(title);
-        $('#confirmationModalBody').text(body);
-        $('#confirm-action-btn').off('click').on('click', () => {
-            onConfirm();
-            bootstrap.Modal.getInstance($('#confirmationModal')).hide();
-        });
-        new bootstrap.Modal($('#confirmationModal')).show();
-    }
-
-    // --- Core Classes ---
-    class Timer {
-        constructor(config = {}) {
-            this.id = config.id || `timer-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            this.name = config.name || 'New Timer';
-            this.setDuration = config.setDuration || { d: 0, h: 0, m: 0, s: 0 };
-            this.remainingTime = this.getTotalSeconds(config.remainingTime ? null : this.setDuration, config.remainingTime);
-            this.state = config.state || 'idle';
-            this.intervalId = null;
-            this.notification = config.notification || { sound: 'Default', repeats: 1, tts: false };
-        }
-        getTotalSeconds(duration, explicitSeconds) {
-            if (explicitSeconds !== undefined) return explicitSeconds;
-            if (!duration) return 0;
-            return (duration.d * 86400) + (duration.h * 3600) + (duration.m * 60) + duration.s;
-        }
-    }
-
-    class Cascade {
-        constructor(config = {}) {
-            this.id = config.id || `cascade-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            this.name = config.name || `Cascade ${appState.cascades.length + 1}`;
-            this.timers = (config.timers ? config.timers.map(t => new Timer(t)) : [new Timer({ name: 'Timer 1' })]);
-            this.activeTimerIndex = config.activeTimerIndex || 0;
-            this.repeat = config.repeat || false;
-        }
-    }
-
-    // --- Initialization ---
-    function init() {
-        loadState();
-        renderFAQ();
-        renderAll();
-        bindGlobalEvents();
-        logger.log('system', 'Application initialized.', 'info');
-    }
-
-    // --- State Management (Save/Load) ---
-    function saveState() {
-        try {
-            const stateToSave = { ...appState };
-            stateToSave.cascades = stateToSave.cascades.map(c => ({
-                ...c,
-                timers: c.timers.map(t => ({ ...t, intervalId: null, state: (t.state === 'running' ? 'paused' : t.state) }))
-            }));
-            localStorage.setItem('cascadeTimerState', JSON.stringify(stateToSave));
-        } catch (e) {
-            logger.log('system', `Failed to save state: ${e.message}`, 'error');
-        }
-    }
-
-    function loadState() {
-        try {
-            const savedState = localStorage.getItem('cascadeTimerState');
-            if (savedState) {
-                const parsedState = JSON.parse(savedState);
-                appState.cascades = parsedState.cascades.map(cData => new Cascade(cData));
-                appState.activeCascadeIndex = parsedState.activeCascadeIndex >= appState.cascades.length ? -1 : parsedState.activeCascadeIndex;
-                appState.globalMute = parsedState.globalMute || false;
-                appState.logs = parsedState.logs || { system: [] };
-                appState.cascades.forEach(c => { if (!appState.logs[c.id]) appState.logs[c.id] = []; });
-            }
-        } catch (e) {
-            logger.log('system', `Failed to load state: ${e.message}`, 'error');
-            appState.cascades = [];
-        }
-    }
+    // --- State Management ---
+    function saveState() { try { const stateToSave = { ...appState, cascades: appState.cascades.map(c => ({...c, timers: c.timers.map(t => ({ ...t, intervalId: null, state: (t.state === 'running' ? 'paused' : t.state) }))}))}; localStorage.setItem('cascadeTimerState', JSON.stringify(stateToSave)); } catch (e) { logger.log('system', `Failed to save state: ${e.message}`, 'error'); } }
+    function loadState() { try { const savedState = localStorage.getItem('cascadeTimerState'); if (savedState) { const parsedState = JSON.parse(savedState); appState.cascades = parsedState.cascades.map(cData => new Cascade(cData)); appState.activeCascadeIndex = parsedState.activeCascadeIndex >= appState.cascades.length ? -1 : parsedState.activeCascadeIndex; appState.globalMute = parsedState.globalMute || false; appState.logs = parsedState.logs || { system: [] }; appState.cascades.forEach(c => { if (!appState.logs[c.id]) appState.logs[c.id] = []; }); } } catch (e) { logger.log('system', `Failed to load state: ${e.message}`, 'error'); appState.cascades = []; } }
 
     // --- UI Rendering ---
-    function renderAll() {
-        stopAllTimers();
-        $('#cascade-container').empty();
-        if (appState.cascades.length === 0) {
-            $('#welcome-message').show();
-        } else {
-            $('#welcome-message').hide();
-            appState.cascades.forEach((cascade, index) => {
-                $('#cascade-container').append(createCascadeHtml(cascade, index));
-            });
-            updateActiveCascadeView();
-        }
-        updateCascadeSwitcher();
-        updateGlobalMuteButton();
-        bindDynamicEvents();
-    }
-
-    function createCascadeHtml(cascade, index) {
-        const timersHtml = cascade.timers.map((timer, timerIndex) => createTimerHtml(timer, cascade, timerIndex)).join('');
-        return `
-            <div class="cascade ${index === appState.activeCascadeIndex ? 'active' : ''}" id="${cascade.id}" data-cascade-index="${index}">
-                <div class="cascade-header">
-                    <h2 class="cascade-title"><span class="ordinal">#${index + 1}</span> ${cascade.name}</h2>
-                    <div class="dropdown">
-                        <button class="icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Cascade Options"><i class="fas fa-ellipsis-v"></i></button>
-                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                            <li><a class="dropdown-item edit-cascade-btn" href="#"><i class="fas fa-edit fa-fw me-2"></i>Edit</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="cascade-body">${timersHtml}</div>
-            </div>`;
-    }
-
-    function createTimerHtml(timer, cascade, timerIndex) {
-        const isActiveTimer = timerIndex === cascade.activeTimerIndex;
-        const timeParts = formatTime(timer.remainingTime);
-        const isPaused = timer.state !== 'running';
-        return `
-            <div class="timer-widget ${isActiveTimer ? 'active' : ''}" id="${timer.id}" data-timer-id="${timer.id}" data-cascade-id="${cascade.id}">
-                <h3 class="timer-title">${timer.name}</h3>
-                <div class="timer-display">${timeParts.d} d : ${timeParts.h} h : ${timeParts.m} m : ${timeParts.s} s</div>
-                <div class="timer-controls">
-                    <button class="icon-btn play-pause-btn" title="${isPaused ? 'Play' : 'Pause'}"><i class="fas ${isPaused ? 'fa-play' : 'fa-pause'}"></i></button>
-                    <div class="dropdown">
-                        <button class="icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Timer Options"><i class="fas fa-ellipsis-h"></i></button>
-                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                            <li><a class="dropdown-item prev-timer-btn ${timerIndex === 0 ? 'disabled' : ''}" href="#">Previous Timer</a></li>
-                            <li><a class="dropdown-item next-timer-btn ${timerIndex === cascade.timers.length - 1 ? 'disabled' : ''}" href="#">Next Timer</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item reset-timer-btn" href="#">Reset Timer</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>`;
-    }
-
-    function updateActiveCascadeView() {
-        $('.cascade').removeClass('active');
-        if (appState.activeCascadeIndex > -1) {
-            const activeCascade = findCascadeByIndex(appState.activeCascadeIndex);
-            if (activeCascade) $(`#${activeCascade.id}`).addClass('active');
-        }
-    }
-
-    function updateActiveTimerView(cascade) {
-        $(`#${cascade.id} .timer-widget`).removeClass('active');
-        const activeTimer = cascade.timers[cascade.activeTimerIndex];
-        if (activeTimer) {
-            const activeTimerEl = $(`#${activeTimer.id}`);
-            activeTimerEl.addClass('active');
-            activeTimerEl[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
-
-    function updateCascadeSwitcher() {
-        const menu = $('#cascade-switcher-menu');
-        menu.empty();
-        $('#cascade-switcher-btn').prop('disabled', appState.cascades.length < 2);
-        appState.cascades.forEach((cascade, index) => {
-            if (index !== appState.activeCascadeIndex) {
-                menu.append(`<li><a class="dropdown-item switch-cascade-btn" href="#" data-cascade-index="${index}">${index + 1}. ${cascade.name}</a></li>`);
-            }
-        });
-    }
-
-    function updateGlobalMuteButton() {
-        const icon = appState.globalMute ? 'fa-volume-mute' : 'fa-volume-up';
-        const title = appState.globalMute ? 'Unmute All Sounds' : 'Mute All Sounds';
-        $('#global-mute-btn').html(`<i class="fas ${icon}"></i>`).attr('title', title);
-    }
-
-
-    function saveAndRender() {
-        saveState();
-        renderAll();
-    }
+    function renderAll() { stopAllTimers(); $('#cascade-container').empty(); if (appState.cascades.length === 0) $('#welcome-message').show(); else { $('#welcome-message').hide(); appState.cascades.forEach((cascade, index) => $('#cascade-container').append(createCascadeHtml(cascade, index))); updateActiveCascadeView(); } updateCascadeSwitcher(); updateGlobalMuteButton(); bindDynamicEvents(); }
+    function createCascadeHtml(cascade, index) { const timersHtml = cascade.timers.map((timer, timerIndex) => createTimerHtml(timer, cascade, timerIndex)).join(''); return ` <div class="cascade ${index === appState.activeCascadeIndex ? 'active' : ''}" id="${cascade.id}" data-cascade-index="${index}"> <div class="cascade-header"> <h2 class="cascade-title"><span class="ordinal">#${index + 1}</span> ${cascade.name}</h2> <div class="dropdown"> <button class="icon-btn" type="button" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button> <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end"> <li><a class="dropdown-item edit-cascade-btn" href="#"><i class="fas fa-edit fa-fw me-2"></i>Edit</a></li> <li><a class="dropdown-item restart-cascade-btn" href="#"><i class="fas fa-redo-alt fa-fw me-2"></i>Restart</a></li> </ul> </div> </div> <div class="cascade-body">${timersHtml}</div> </div>`; }
+    function createTimerHtml(timer, cascade, timerIndex) { const isActiveTimer = timerIndex === cascade.activeTimerIndex; const timeParts = formatTime(timer.remainingTime); const isPaused = timer.state !== 'running'; const isFinished = timer.remainingTime <= 0; return ` <div class="timer-widget ${isActiveTimer ? 'active' : ''}" id="${timer.id}" data-timer-id="${timer.id}" data-cascade-id="${cascade.id}"> <h3 class="timer-title">${timer.name}</h3> <div class="timer-display">${timeParts.d} d : ${timeParts.h} h : ${timeParts.m} m : ${timeParts.s} s</div> <div class="timer-controls"> <button class="icon-btn play-pause-btn" title="${isPaused ? 'Play' : 'Pause'}" ${isFinished && isPaused ? 'disabled' : ''}><i class="fas ${isPaused ? 'fa-play' : 'fa-pause'}"></i></button> <div class="dropdown"> <button class="icon-btn" type="button" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-h"></i></button> <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end"> <li><a class="dropdown-item prev-timer-btn ${timerIndex === 0 ? 'disabled' : ''}" href="#">Previous Timer</a></li> <li><a class="dropdown-item next-timer-btn ${timerIndex === cascade.timers.length - 1 ? 'disabled' : ''}" href="#">Next Timer</a></li> <li><hr class="dropdown-divider"></li> <li><a class="dropdown-item reset-timer-btn" href="#">Reset Timer</a></li> </ul> </div> </div> </div>`; }
+    function updateActiveCascadeView() { $('.cascade').removeClass('active'); if (appState.activeCascadeIndex > -1) { const activeCascade = findCascadeByIndex(appState.activeCascadeIndex); if (activeCascade) $(`#${activeCascade.id}`).addClass('active'); } }
+    function updateActiveTimerView(cascade) { $(`#${cascade.id} .timer-widget`).removeClass('active'); const activeTimer = cascade.timers[cascade.activeTimerIndex]; if (activeTimer) { const activeTimerEl = $(`#${activeTimer.id}`); activeTimerEl.addClass('active'); activeTimerEl[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } }
+    function updateCascadeSwitcher() { const menu = $('#cascade-switcher-menu').empty(); $('#cascade-switcher-btn').prop('disabled', appState.cascades.length < 2); appState.cascades.forEach((c, i) => { if (i !== appState.activeCascadeIndex) menu.append(`<li><a class="dropdown-item switch-cascade-btn" href="#" data-cascade-index="${i}">${i + 1}. ${c.name}</a></li>`); }); }
+    function updateGlobalMuteButton() { const icon = appState.globalMute ? 'fa-volume-mute' : 'fa-volume-up'; const title = appState.globalMute ? 'Unmute All' : 'Mute All'; $('#global-mute-btn').html(`<i class="fas ${icon}"></i>`).attr('title', title); }
 
     // --- Timer Logic ---
-    function stopAllTimers() {
-        appState.cascades.forEach(c => c.timers.forEach(t => { if (t.intervalId) clearInterval(t.intervalId); }));
-    }
-
-    function startTimer(timer, cascade) {
-        if (timer.state === 'running' || timer.remainingTime <= 0) return;
-        timer.state = 'running';
-        const timerEl = $(`#${timer.id}`);
-        timerEl.find('.play-pause-btn i').removeClass('fa-play').addClass('fa-pause');
-        timer.intervalId = setInterval(() => {
-            timer.remainingTime--;
-            const timeParts = formatTime(timer.remainingTime);
-            timerEl.find('.timer-display').text(`${timeParts.d} d : ${timeParts.h} h : ${timeParts.m} m : ${timeParts.s} s`);
-            if (timer.remainingTime <= 0) {
-                handleTimerFinished(timer, cascade);
-            }
-        }, 1000);
-    }
-
-    function pauseTimer(timer, cascadeId) {
-        if (timer.state !== 'running') return;
-        clearInterval(timer.intervalId);
-        timer.state = 'paused';
-        $(`#${timer.id}`).find('.play-pause-btn i').removeClass('fa-pause').addClass('fa-play');
-        saveState();
-    }
-
-    function handleTimerFinished(timer, cascade) {
-        clearInterval(timer.intervalId);
-        timer.state = 'finished';
-        logger.log(cascade.id, `Timer "${timer.name}" finished.`, 'info');
-        playNotification(timer, cascade);
-
-        const nextTimerIndex = cascade.activeTimerIndex + 1;
-        if (nextTimerIndex < cascade.timers.length) {
-            cascade.activeTimerIndex = nextTimerIndex;
-            const nextTimer = cascade.timers[nextTimerIndex];
-            nextTimer.remainingTime = nextTimer.getTotalSeconds(nextTimer.setDuration);
-
-            // **BUG FIX**: Update UI first, then start next timer without full re-render
-            updateActiveTimerView(cascade);
-            $(`#${timer.id}`).find('.play-pause-btn i').removeClass('fa-pause').addClass('fa-play'); // Reset finished timer icon
-            startTimer(nextTimer, cascade);
-            saveState();
-
-        } else if (cascade.repeat) {
-            logger.log(cascade.id, `Cascade repeating.`, 'info');
-            cascade.timers.forEach(t => t.remainingTime = t.getTotalSeconds(t.setDuration));
-            cascade.activeTimerIndex = 0;
-
-            // **BUG FIX**: Similar logic for repeating
-            updateActiveTimerView(cascade);
-            $(`#${timer.id}`).find('.play-pause-btn i').removeClass('fa-pause').addClass('fa-play');
-            startTimer(cascade.timers[0], cascade);
-            saveState();
-
-        } else {
-            logger.log(cascade.id, `Cascade finished.`, 'info');
-            $(`#${timer.id}`).find('.play-pause-btn i').removeClass('fa-pause').addClass('fa-play');
-            saveState();
-        }
-    }
+    function stopAllTimers() { appState.cascades.forEach(c => c.timers.forEach(t => { if (t.intervalId) clearInterval(t.intervalId); })); }
+    function startTimer(timer, cascade) { if (timer.state === 'running' || timer.remainingTime <= 0) return; timer.state = 'running'; const timerEl = $(`#${timer.id}`); timerEl.find('.play-pause-btn i').removeClass('fa-play').addClass('fa-pause'); timer.intervalId = setInterval(() => { timer.remainingTime--; const timeParts = formatTime(timer.remainingTime); timerEl.find('.timer-display').text(`${timeParts.d} d : ${timeParts.h} h : ${timeParts.m} m : ${timeParts.s} s`); if (timer.remainingTime <= 0) handleTimerFinished(timer, cascade); }, 1000); }
+    function pauseTimer(timer) { if (timer.state !== 'running') return; clearInterval(timer.intervalId); timer.state = 'paused'; $(`#${timer.id}`).find('.play-pause-btn i').removeClass('fa-pause').addClass('fa-play'); saveState(); }
+    function handleTimerFinished(timer, cascade) { clearInterval(timer.intervalId); timer.state = 'finished'; logger.log(cascade.id, `Timer "${timer.name}" finished.`, 'info'); playNotification(timer, cascade); showDesktopNotification(timer, cascade); const nextTimerIndex = cascade.activeTimerIndex + 1; const currentTimerEl = $(`#${timer.id}`); currentTimerEl.find('.play-pause-btn i').removeClass('fa-pause').addClass('fa-play'); currentTimerEl.find('.play-pause-btn').prop('disabled', true); if (nextTimerIndex < cascade.timers.length) { cascade.activeTimerIndex = nextTimerIndex; const nextTimer = cascade.timers[nextTimerIndex]; nextTimer.remainingTime = nextTimer.getTotalSeconds(nextTimer.setDuration); updateActiveTimerView(cascade); startTimer(nextTimer, cascade); } else if (cascade.repeat) { logger.log(cascade.id, `Cascade repeating.`, 'info'); cascade.timers.forEach(t => t.remainingTime = t.getTotalSeconds(t.setDuration)); cascade.activeTimerIndex = 0; renderAll(); startTimer(cascade.timers[0], cascade); } else { logger.log(cascade.id, `Cascade finished.`, 'info'); updateActiveTimerView(cascade); } saveState(); }
 
     // --- Event Handlers & Core Logic ---
-    function bindGlobalEvents() {
-        $('#add-cascade-btn').on('click', createNewCascade);
-        $('#save-cascade-changes-btn').on('click', saveCascadeChangesFromModal);
-        $('#global-mute-btn').on('click', toggleGlobalMute);
-        $('#save-all-btn').on('click', saveAllCascadesToZip);
-        $('#load-file-input').on('change', loadFromFile);
-        $('#view-logs-btn').on('click', renderLogs);
-        $(document).on('click', '.switch-cascade-btn', function (e) {
-            e.preventDefault();
-            switchCascade(parseInt($(this).data('cascade-index')));
-        });
-    }
+    function bindGlobalEvents() { $('#add-cascade-btn').on('click', createNewCascade); $('#save-cascade-changes-btn').on('click', saveCascadeChangesFromModal); $('#global-mute-btn').on('click', toggleGlobalMute); $('#save-all-btn').on('click', saveAllCascadesToZip); $('#load-file-input').on('change', loadFromFile); $('#view-logs-btn').on('click', renderLogs); $(document).on('click', '.switch-cascade-btn', function(e) { e.preventDefault(); switchCascade(parseInt($(this).data('cascade-index'))); }); }
+    function bindDynamicEvents() { $('.edit-cascade-btn').on('click', function() { openEditModal($(this).closest('.cascade').attr('id')); }); $('.restart-cascade-btn').on('click', function() { const cascadeId = $(this).closest('.cascade').attr('id'); showConfirmation('Restart Cascade?', 'All timers in this cascade will be reset and started from the beginning.', () => restartCascade(cascadeId)); }); $('.play-pause-btn').on('click', function() { const el = $(this).closest('.timer-widget'); const cascade = findCascadeById(el.data('cascade-id')); const timer = findTimerById(cascade, el.data('timer-id')); if (timer) timer.state === 'running' ? pauseTimer(timer) : startTimer(timer, cascade); }); $('.reset-timer-btn').on('click', function() { const el = $(this).closest('.timer-widget'); const cascade = findCascadeById(el.data('cascade-id')); const timer = findTimerById(cascade, el.data('timer-id')); if (timer) { clearInterval(timer.intervalId); timer.remainingTime = timer.getTotalSeconds(timer.setDuration); timer.state = 'idle'; logger.log(cascade.id, `Timer "${timer.name}" reset.`, 'info'); renderAll(); saveState(); } }); $('.next-timer-btn, .prev-timer-btn').on('click', function() { if ($(this).hasClass('disabled')) return; switchTimer(this, $(this).hasClass('next-timer-btn') ? 1 : -1); }); }
+    function createNewCascade() { const newCascade = new Cascade(); appState.cascades.push(newCascade); appState.activeCascadeIndex = appState.cascades.length - 1; if (!appState.logs[newCascade.id]) appState.logs[newCascade.id] = []; logger.log(newCascade.id, `Cascade created.`, 'info'); renderAll(); saveState(); openEditModal(newCascade.id); }
+    function switchCascade(index) { if (index >= 0 && index < appState.cascades.length) { if (appState.activeCascadeIndex > -1) { const oldCascade = findCascadeByIndex(appState.activeCascadeIndex); const activeTimer = oldCascade.timers[oldCascade.activeTimerIndex]; if (activeTimer && activeTimer.state === 'running') pauseTimer(activeTimer); } appState.activeCascadeIndex = index; logger.log(findCascadeByIndex(index).id, 'Switched cascade.', 'info'); renderAll(); saveState(); } }
+    function switchTimer(buttonElement, direction) { const el = $(buttonElement).closest('.timer-widget'); const cascade = findCascadeById(el.data('cascade-id')); if (cascade) { pauseTimer(cascade.timers[cascade.activeTimerIndex]); cascade.activeTimerIndex += direction; startTimer(cascade.timers[cascade.activeTimerIndex], cascade); updateActiveTimerView(cascade); saveState(); } }
+    function restartCascade(cascadeId) { const cascade = findCascadeById(cascadeId); if (!cascade) return; logger.log(cascadeId, "Cascade restarting.", "info"); stopAllTimers(); cascade.timers.forEach(t => t.remainingTime = t.getTotalSeconds(t.setDuration)); cascade.activeTimerIndex = 0; renderAll(); startTimer(cascade.timers[0], cascade); saveState(); }
 
-    function bindDynamicEvents() {
-        $('.edit-cascade-btn').on('click', function () { openEditModal($(this).closest('.cascade').attr('id')); });
-        $('.play-pause-btn').on('click', function () {
-            const el = $(this).closest('.timer-widget');
-            const cascade = findCascadeById(el.data('cascade-id'));
-            const timer = findTimerById(cascade, el.data('timer-id'));
-            if (timer) timer.state === 'running' ? pauseTimer(timer) : startTimer(timer, cascade);
-        });
-        $('.reset-timer-btn').on('click', function () {
-            const el = $(this).closest('.timer-widget');
-            const cascade = findCascadeById(el.data('cascade-id'));
-            const timer = findTimerById(cascade, el.data('timer-id'));
-            if (timer) {
-                clearInterval(timer.intervalId);
-                timer.remainingTime = timer.getTotalSeconds(timer.setDuration);
-                timer.state = 'idle';
-                logger.log(cascade.id, `Timer "${timer.name}" reset.`, 'info');
-                renderAll(); // Full render is fine here
-                saveState();
-            }
-        });
-        $('.next-timer-btn, .prev-timer-btn').on('click', function () {
-            if ($(this).hasClass('disabled')) return;
-            switchTimer(this, $(this).hasClass('next-timer-btn') ? 1 : -1);
-        });
-    }
-
-    // --- Core Logic Functions ---
-    function createNewCascade() {
-        const newCascade = new Cascade();
-        appState.cascades.push(newCascade);
-        appState.activeCascadeIndex = appState.cascades.length - 1;
-        if (!appState.logs[newCascade.id]) appState.logs[newCascade.id] = [];
-        logger.log(newCascade.id, `Cascade created.`, 'info');
-        renderAll();
-        saveState();
-        openEditModal(newCascade.id);
-    }
-
-    function switchCascade(index) {
-        if (index >= 0 && index < appState.cascades.length) {
-            if (appState.activeCascadeIndex > -1) {
-                const oldCascade = findCascadeByIndex(appState.activeCascadeIndex);
-                const activeTimer = oldCascade.timers[oldCascade.activeTimerIndex];
-                if (activeTimer && activeTimer.state === 'running') pauseTimer(activeTimer);
-            }
-            appState.activeCascadeIndex = index;
-            logger.log(findCascadeByIndex(index).id, 'Switched to this cascade.', 'info');
-            renderAll();
-            saveState();
-        }
-    }
-
-    function switchTimer(buttonElement, direction) {
-        const el = $(buttonElement).closest('.timer-widget');
-        const cascade = findCascadeById(el.data('cascade-id'));
-        if (cascade) {
-            pauseTimer(cascade.timers[cascade.activeTimerIndex]);
-            cascade.activeTimerIndex += direction;
-            startTimer(cascade.timers[cascade.activeTimerIndex], cascade);
-            updateActiveTimerView(cascade); // Just update UI, no full re-render
-            saveState();
-        }
-    }
-
-    // --- Edit Modal ---
-    function openEditModal(cascadeId) {
-        const cascade = findCascadeById(cascadeId);
-        if (!cascade) return;
-        const modal = $('#editCascadeModal');
-        modal.data('cascadeId', cascadeId);
-        modal.find('#editCascadeModalLabel').text(`Edit: ${cascade.name}`);
-        modal.find('#cascade-name-input').val(cascade.name);
-        modal.find('#cascade-repeat-toggle').prop('checked', cascade.repeat);
-        const timersList = modal.find('#timers-editor-list').empty();
-        cascade.timers.forEach(timer => timersList.append(createTimerEditorHtml(timer)));
-        timersList.sortable({ handle: '.drag-handle', axis: 'y' });
-        bindModalEvents();
-        new bootstrap.Modal(modal[0]).show();
-    }
-
-    function createTimerEditorHtml(timer) {
-        const soundOptionsHtml = Object.keys(soundLibrary).map(key => `<option value="${key}" ${timer.notification.sound === key ? 'selected' : ''}>${key}</option>`).join('');
-        return `
-                <div class="timer-editor" data-timer-id="${timer.id}">
-                    <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
-                    <div class="editor-content">
-                        <div class="timer-editor-header">
-                            <input type="text" class="form-control timer-name-input" placeholder="Timer Name" value="${timer.name}">
-                            <button class="icon-btn delete-timer-btn ms-2" title="Delete Timer"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                        <label class="form-label mt-2">Duration</label>
-                        <div class="time-input-group">
-                            ${createTimeInput('d', timer.setDuration.d, 99)}
-                            <span>:</span>
-                            ${createTimeInput('h', timer.setDuration.h, 23)}
-                            <span>:</span>
-                            ${createTimeInput('m', timer.setDuration.m, 59)}
-                            <span>:</span>
-                            ${createTimeInput('s', timer.setDuration.s, 59)}
-                        </div>
-                        <label class="form-label mt-3">Audio Notification</label>
-                        <div class="notification-controls">
-                            <select class="form-select form-select-sm timer-sound-select w-50">${soundOptionsHtml}</select>
-                            <div class="input-group input-group-sm w-50">
-                                <span class="input-group-text">Repeat</span>
-                                <input type="number" class="form-control timer-repeats-input" min="1" max="10" value="${timer.notification.repeats}">
-                            </div>
-                        </div>
-                        <div class="form-check form-switch mt-3">
-                            <input class="form-check-input timer-tts-toggle" type="checkbox" ${timer.notification.tts ? 'checked' : ''}>
-                            <label class="form-check-label">Speak</label>
-                        </div>
-                    </div>
-                </div>`;
-    }
-
-    function createTimeSpinner(unit, value, max) {
-        return `
-                <div class="time-input-container">
-                    <button class="time-spinner-btn" data-unit="${unit}" data-action="inc">&#9650;</button>
-                    <input type="number" class="form-control time-input" data-unit="${unit}" value="${value}" min="0" max="${max}">
-                    <button class="time-spinner-btn" data-unit="${unit}" data-action="dec">&#9660;</button>
-                    <small class="text-muted text-uppercase">${unit}</small>
-                </div>`;
-    }
-
-    function createTimeInput(unit, value, max) {
-        return `<input type="number" class="form-control time-input" data-unit="${unit}" value="${value}" min="0" max="${max}" title="${unit.toUpperCase()}">`;
-    }
-
-    function bindModalEvents() {
-        $('#editCascadeModal').off('click'); // Unbind previous
-        $('#delete-cascade-btn').on('click', () => {
-            const cascadeId = $('#editCascadeModal').data('cascadeId');
-            showConfirmation('Delete Cascade?', 'This will permanently delete this cascade and all its timers.', () => deleteCascade(cascadeId));
-        });
-        $('#add-timer-btn-footer').on('click', () => {
-            const editorList = $('#timers-editor-list');
-            const newTimerName = `Timer ${editorList.children().length + 1}`;
-            const lastSound = editorList.find('.timer-sound-select').last().val() || 'Default';
-            const newTimer = new Timer({ name: newTimerName, notification: { sound: lastSound, repeats: 1, tts: false } });
-            editorList.append(createTimerEditorHtml(newTimer));
-        });
-        $('#timers-editor-list').on('click', '.delete-timer-btn', function () {
-            const timerEditor = $(this).closest('.timer-editor');
-            showConfirmation('Delete Timer?', 'Are you sure?', () => timerEditor.remove());
-        });
-    }
-
-    function saveCascadeChangesFromModal() {
-        const modal = $('#editCascadeModal');
-        const cascade = findCascadeById(modal.data('cascadeId'));
-        if (!cascade) return;
-        cascade.name = modal.find('#cascade-name-input').val() || 'Untitled Cascade';
-        cascade.repeat = modal.find('#cascade-repeat-toggle').is(':checked');
-        const newTimers = [];
-        modal.find('.timer-editor').each(function () {
-            const editor = $(this);
-            const setDuration = {
-                d: parseInt(editor.find('.time-input[data-unit="d"]').val()), h: parseInt(editor.find('.time-input[data-unit="h"]').val()),
-                m: parseInt(editor.find('.time-input[data-unit="m"]').val()), s: parseInt(editor.find('.time-input[data-unit="s"]').val())
-            };
-            newTimers.push(new Timer({
-                id: editor.data('timer-id'), name: editor.find('.timer-name-input').val() || 'Untitled Timer', setDuration,
-                notification: {
-                    sound: editor.find('.timer-sound-select').val(), repeats: parseInt(editor.find('.timer-repeats-input').val()),
-                    tts: editor.find('.timer-tts-toggle').is(':checked')
-                }
-            }));
-        });
-        if (cascade.activeTimerIndex >= newTimers.length) cascade.activeTimerIndex = 0;
-        cascade.timers = newTimers;
-        logger.log(cascade.id, 'Cascade changes saved.', 'info');
-        renderAll();
-        saveState();
-        bootstrap.Modal.getInstance(modal[0]).hide();
-    }
-
-    function deleteCascade(cascadeId) {
-        const index = appState.cascades.findIndex(c => c.id === cascadeId);
-        if (index > -1) {
-            delete appState.logs[cascadeId];
-            appState.cascades.splice(index, 1);
-            if (appState.activeCascadeIndex >= index) appState.activeCascadeIndex--;
-            if (appState.cascades.length === 0) appState.activeCascadeIndex = -1;
-            else if (appState.activeCascadeIndex < 0) appState.activeCascadeIndex = 0;
-            renderAll();
-            saveState();
-        }
-    }
-
-    // --- Audio & Notifications ---
-    function playNotification(timer, cascade) {
-        if (appState.globalMute || timer.notification.sound === 'Mute') return;
-        const audioSrc = soundLibrary[timer.notification.sound];
-        if (!audioSrc) return;
-        let playCount = 0;
-        const audio = new Audio(audioSrc);
-        audio.onended = () => {
-            playCount++;
-            if (playCount < timer.notification.repeats) audio.play();
-            else if (timer.notification.tts) speakNotification(timer, cascade);
-        };
-        audio.play().catch(e => logger.log(cascade.id, `Audio failed: ${e.message}`, 'error'));
-    }
-
-    function speakNotification(timer, cascade) {
-        if (!('speechSynthesis' in window)) return;
-        const text = `In cascade ${cascade.name}, timer ${timer.name} has completed.`;
-        const utterance = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(utterance);
-    }
-
-    function toggleGlobalMute() {
-        appState.globalMute = !appState.globalMute;
-        logger.log('system', `Global mute ${appState.globalMute ? 'enabled' : 'disabled'}.`, 'info');
-        updateGlobalMuteButton();
-        saveState();
-    }
-
-    // --- Save/Load ---
-    function saveAllCascadesToZip() {
-        try {
-            const zip = new JSZip();
-            const data = JSON.stringify(appState, (key, value) => (key === 'intervalId' ? undefined : value), 2);
-            zip.file("cascade_timer_backup.json", data);
-            zip.generateAsync({ type: "blob" }).then(function (content) {
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(content);
-                link.download = `cascade_timer_backup_${new Date().toISOString().slice(0, 10)}.zip`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                logger.log('system', 'All cascades saved to zip.', 'info');
-            });
-        } catch (e) {
-            logger.log('system', `Failed to save to zip: ${e.message}`, 'error');
-            alert('Error creating zip file. See logs for details.');
-        }
-    }
-
-    function loadFromFile(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        if (file.name.endsWith('.zip')) {
-            reader.onload = function (e) {
-                JSZip.loadAsync(e.target.result).then(function (zip) {
-                    const jsonFile = zip.file("cascade_timer_backup.json");
-                    if (jsonFile) {
-                        jsonFile.async("string").then(processLoadedData);
-                    } else {
-                        alert('Error: The zip file does not contain "cascade_timer_backup.json".');
-                    }
-                });
-            };
-            reader.readAsArrayBuffer(file);
-        } else if (file.name.endsWith('.json')) {
-            reader.onload = function (e) {
-                processLoadedData(e.target.result);
-            };
-            reader.readAsText(file);
-        } else {
-            alert('Unsupported file type. Please select a .json or .zip file.');
-        }
-        // Reset file input
-        $(event.target).val('');
-    }
-
-    function processLoadedData(jsonData) {
-        try {
-            const loadedState = JSON.parse(jsonData);
-            // Basic validation
-            if (loadedState && Array.isArray(loadedState.cascades)) {
-                stopAllTimers();
-                appState = {
-                    cascades: loadedState.cascades.map(c => new Cascade(c)),
-                    activeCascadeIndex: loadedState.activeCascadeIndex || 0,
-                    globalMute: loadedState.globalMute || false,
-                    mutedByGlobal: new Set(),
-                    logs: loadedState.logs || { system: [] }
-                };
-                if (appState.cascades.length === 0) appState.activeCascadeIndex = -1;
-                logger.log('system', 'Successfully loaded data from file.', 'info');
-                saveAndRender();
-            } else {
-                throw new Error("Invalid data structure.");
-            }
-        } catch (e) {
-            logger.log('system', `Failed to process loaded file: ${e.message}`, 'error');
-            alert("Error: The file is corrupted or not a valid Cascade Timer backup.");
-        }
-    }
-
-    // --- Misc Helpers ---
+    // --- Edit Modal Logic ---
+    function openEditModal(cascadeId) { const cascade = findCascadeById(cascadeId); if (!cascade) return; const modal = $('#editCascadeModal'); modal.data('cascadeId', cascadeId); modal.find('#editCascadeModalLabel').text(`Edit: ${cascade.name}`); modal.find('#cascade-name-input').val(cascade.name); modal.find('#cascade-repeat-toggle').prop('checked', cascade.repeat); const timersList = modal.find('#timers-editor-list').empty(); cascade.timers.forEach(timer => timersList.append(createTimerEditorHtml(timer))); timersList.sortable({ handle: '.drag-handle', axis: 'y' }); bindModalEvents(); new bootstrap.Modal(modal[0]).show(); }
+    function createTimerEditorHtml(timer) { const soundOptionsHtml = Object.keys(soundLibrary).map(key => `<option value="${key}" ${timer.notification.sound === key ? 'selected' : ''}>${key}</option>`).join(''); return ` <div class="timer-editor" data-timer-id="${timer.id}"> <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div> <div class="w-100"> <div class="d-flex align-items-center mb-2"> <input type="text" class="form-control timer-name-input" placeholder="Timer Name" value="${timer.name}"> <button class="icon-btn delete-timer-btn ms-2" title="Delete Timer"><i class="fas fa-trash-alt icon-danger"></i></button> </div> <label class="form-label mt-2">Duration</label> <div class="time-input-group"> ${createTimeInput('d', timer.setDuration.d, 99)} ${createTimeInput('h', timer.setDuration.h, 23)} ${createTimeInput('m', timer.setDuration.m, 59)} ${createTimeInput('s', timer.setDuration.s, 59)} </div> <div class="notification-controls"> <select class="form-select form-select-sm timer-sound-select">${soundOptionsHtml}</select> <div class="input-group input-group-sm"> <span class="input-group-text">Repeat</span> <input type="number" class="form-control timer-repeats-input" min="1" max="10" value="${timer.notification.repeats}"> </div> <div class="form-check form-switch"> <input class="form-check-input timer-tts-toggle" type="checkbox" ${timer.notification.tts ? 'checked' : ''}> <label class="form-check-label">Speak</label> </div> </div> </div> </div>`; }
+    function createTimeInput(unit, value, max) { return `<div class="time-input-container"><input type="number" class="form-control time-input" data-unit="${unit}" value="${value}" min="0" max="${max}"><small class="text-muted text-uppercase">${unit}</small></div>`; }
+    function bindModalEvents() { $('#editCascadeModal').off('click'); $('#delete-cascade-btn').on('click', () => { const cascadeId = $('#editCascadeModal').data('cascadeId'); showConfirmation('Delete Cascade?', 'This will permanently delete this cascade and all its timers.', () => deleteCascade(cascadeId)); }); $('#add-timer-btn-footer').on('click', () => { const editorList = $('#timers-editor-list'); const newTimerName = `Timer ${editorList.children().length + 1}`; const lastSound = editorList.find('.timer-sound-select').last().val() || 'Default'; const newTimer = new Timer({ name: newTimerName, notification: { sound: lastSound, repeats: 1, tts: false } }); editorList.append(createTimerEditorHtml(newTimer)); }); $('#timers-editor-list').on('click', '.delete-timer-btn', function() { const timerEditor = $(this).closest('.timer-editor'); showConfirmation('Delete Timer?', 'Are you sure?', () => timerEditor.remove()); }); }
+    function saveCascadeChangesFromModal() { const modal = $('#editCascadeModal'); const cascade = findCascadeById(modal.data('cascadeId')); if (!cascade) return; cascade.name = modal.find('#cascade-name-input').val() || 'Untitled'; cascade.repeat = modal.find('#cascade-repeat-toggle').is(':checked'); const newTimers = []; modal.find('.timer-editor').each(function() { const editor = $(this); const setDuration = { d: parseInt(editor.find('.time-input[data-unit="d"]').val()), h: parseInt(editor.find('.time-input[data-unit="h"]').val()), m: parseInt(editor.find('.time-input[data-unit="m"]').val()), s: parseInt(editor.find('.time-input[data-unit="s"]').val()) }; newTimers.push(new Timer({ id: editor.data('timer-id'), name: editor.find('.timer-name-input').val() || 'Untitled', setDuration, notification: { sound: editor.find('.timer-sound-select').val(), repeats: parseInt(editor.find('.timer-repeats-input').val()), tts: editor.find('.timer-tts-toggle').is(':checked') } })); }); if (cascade.activeTimerIndex >= newTimers.length) cascade.activeTimerIndex = 0; cascade.timers = newTimers; logger.log(cascade.id, 'Cascade changes saved.', 'info'); renderAll(); saveState(); bootstrap.Modal.getInstance(modal[0]).hide(); }
+    function deleteCascade(cascadeId) { const index = appState.cascades.findIndex(c => c.id === cascadeId); if (index > -1) { delete appState.logs[cascadeId]; appState.cascades.splice(index, 1); if (appState.activeCascadeIndex >= index) appState.activeCascadeIndex--; if (appState.cascades.length === 0) appState.activeCascadeIndex = -1; else if (appState.activeCascadeIndex < 0) appState.activeCascadeIndex = 0; bootstrap.Modal.getInstance($('#editCascadeModal')).hide(); renderAll(); saveState(); } }
+    
+    // --- Notifications & Audio ---
+    function playNotification(timer, cascade) { if (appState.globalMute || timer.notification.sound === 'Mute') return; const audioSrc = soundLibrary[timer.notification.sound]; if (!audioSrc) return; let playCount = 0; const playSound = () => { if (playCount < timer.notification.repeats) { const audio = new Audio(audioSrc); audio.onended = () => { playCount++; playSound(); }; audio.play().catch(e => logger.log(cascade.id, `Audio failed: ${e.message}`, 'error')); } else if (timer.notification.tts) { speakNotification(timer, cascade); } }; playSound(); }
+    function speakNotification(timer, cascade) { if (!('speechSynthesis' in window)) return; const text = `${timer.name} in ${cascade.name} completed.`; const utterance = new SpeechSynthesisUtterance(text); window.speechSynthesis.speak(utterance); }
+    function showDesktopNotification(timer, cascade) { if (!('Notification' in window) || Notification.permission !== 'granted') return; const body = `Timer "${timer.name}" has finished.`; new Notification(`Cascade: ${cascade.name}`, { body, icon: 'favicon.ico' }); }
+    function toggleGlobalMute() { appState.globalMute = !appState.globalMute; logger.log('system', `Global mute ${appState.globalMute ? 'enabled' : 'disabled'}.`, 'info'); updateGlobalMuteButton(); saveState(); }
+    
+    // --- File IO, Logs, FAQ ---
+    function saveAllCascadesToZip() { try { const zip = new JSZip(); zip.file("cascade_timer_backup.json", JSON.stringify(appState, null, 2)); zip.generateAsync({type:"blob"}).then(content => { const link = document.createElement('a'); link.href=URL.createObjectURL(content); link.download=`cascade_timer_backup_${new Date().toISOString().slice(0,10)}.zip`; document.body.appendChild(link); link.click(); document.body.removeChild(link); }); } catch(e) { alert('Error creating zip file.'); } }
+    function loadFromFile(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); if (file.name.endsWith('.zip')) { reader.onload = e => JSZip.loadAsync(e.target.result).then(zip => zip.file("cascade_timer_backup.json")?.async("string").then(processLoadedData)); reader.readAsArrayBuffer(file); } else if (file.name.endsWith('.json')) { reader.onload = e => processLoadedData(e.target.result); reader.readAsText(file); } else alert('Unsupported file type.'); $(event.target).val(''); }
+    function processLoadedData(jsonData) { try { const loadedState = JSON.parse(jsonData); if (loadedState && Array.isArray(loadedState.cascades)) { stopAllTimers(); appState = { cascades: loadedState.cascades.map(c => new Cascade(c)), activeCascadeIndex: loadedState.activeCascadeIndex || 0, globalMute: loadedState.globalMute || false, logs: loadedState.logs || { system: [] } }; if (appState.cascades.length === 0) appState.activeCascadeIndex = -1; logger.log('system', 'Loaded data from file.', 'info'); saveState(); renderAll(); } else throw new Error("Invalid data."); } catch (e) { alert("Error: Corrupted or invalid backup file."); } }
     function renderLogs() {
         const accordion = $('#logs-accordion');
         accordion.empty();
-
+    
         Object.entries(appState.logs).forEach(([cascadeId, logs]) => {
             const cascade = findCascadeById(cascadeId);
             const title = cascade ? `${cascade.name} (#${appState.cascades.indexOf(cascade) + 1})` : "System Logs";
-
+    
             const logEntriesHtml = logs.slice().reverse().map(log =>
                 `<div class="log-entry log-${log.type}">
                         <span class="log-timestamp">[${new Date(log.timestamp).toLocaleTimeString()}]</span>
                         <span>${log.message}</span>
                     </div>`
             ).join('');
-
+    
             const accordionItemHtml = `
                     <div class="accordion-item">
                         <h2 class="accordion-header">
@@ -617,26 +89,13 @@ $(document).ready(function () {
             accordion.append(accordionItemHtml);
         });
     }
+    function renderFAQ() { $('#faq-content').html(`<h5>What is a Cascade?</h5><p>A "Cascade" is a collection of timers that run one after another in a sequence. When one timer finishes, the next one automatically starts.</p><h5>How do I edit timers?</h5><p>Click the three-dot menu (<i class="fas fa-ellipsis-v"></i>) on a cascade's header and select "Edit". In the editor, you can change names, durations, and reorder timers by dragging their handle (<i class="fas fa-grip-vertical"></i>).</p><h5>How does Global Mute work?</h5><p>The Global Mute button (<i class="fas fa-volume-up"></i>) temporarily silences all notifications without changing your individual timer settings. Toggling it off restores their original sound settings.</p><h5>How do I save and load my setup?</h5><p>Use the Save (<i class="fas fa-save"></i>) icon to download a <code>.zip</code> file with all your cascades. Use the Load (<i class="fas fa-folder-open"></i>) icon to restore your setup from that file.</p><h5>What are Desktop Notifications?</h5><p>If you grant permission, the app can show a system notification when a timer finishes, even if the browser is minimized. This is useful for staying informed while working in other applications.</p>`); }
 
-    function renderFAQ() {
-        $('#faq-content').html(`
-                <h5>What is a Cascade?</h5><p>A "Cascade" is a collection of timers that run one after another in a sequence. When one timer finishes, the next one automatically starts.</p>
-                <h5>How do I edit timers?</h5><p>Click the three-dot menu (<i class="fas fa-ellipsis-v"></i>) on a cascade's header and select "Edit". In the editor, you can change names, durations, and reorder timers by dragging their handle (<i class="fas fa-grip-vertical"></i>).</p>
-                <h5>How does Global Mute work?</h5><p>The Global Mute button (<i class="fas fa-volume-up"></i>) temporarily silences all notifications without changing your individual timer settings. Toggling it off restores their original sound settings.</p>
-                <h5>How do I save and load my setup?</h5><p>Use the Save (<i class="fas fa-save"></i>) icon to download a <code>.zip</code> file with all your cascades. Use the Load (<i class="fas fa-folder-open"></i>) icon to restore your setup from that file.</p>
-            `);
-    }
-
+    // --- Utility Functions ---
     function findCascadeById(id) { return appState.cascades.find(c => c.id === id); }
     function findCascadeByIndex(index) { return appState.cascades[index]; }
     function findTimerById(cascade, id) { return cascade ? cascade.timers.find(t => t.id === id) : null; }
-    function formatTime(s) { const d = Math.floor(s / 86400); s %= 86400; const h = Math.floor(s / 3600); s %= 3600; const m = Math.floor(s / 60); return { d: String(d).padStart(2, '0'), h: String(h).padStart(2, '0'), m: String(m).padStart(2, '0'), s: String(s % 60).padStart(2, '0') }; }
+    function formatTime(s) { const d=Math.floor(s/86400); s%=86400; const h=Math.floor(s/3600); s%=3600; const m=Math.floor(s/60); return {d:String(d).padStart(2,'0'),h:String(h).padStart(2,'0'),m:String(m).padStart(2,'0'),s:String(s%60).padStart(2,'0')}; }
 
-    function populateSoundSelects(selector) {
-        const soundOptionsHtml = Object.keys(soundLibrary).map(key => `<option value="${key}">${key}</option>`).join('');
-        $(selector).html(soundOptionsHtml);
-    }
-
-    // --- Start the application ---
     init();
 });

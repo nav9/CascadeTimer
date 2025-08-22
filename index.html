@@ -30,15 +30,11 @@
                 <button class="icon-btn" type="button" id="cascade-switcher-btn" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Cascade" disabled>
                     <i class="fas fa-layer-group"></i> Cascades
                 </button>
-                <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="cascade-switcher-btn" id="cascade-switcher-menu">
-                    <!-- Cascade links will be injected here -->
-                </ul>
+                <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="cascade-switcher-btn" id="cascade-switcher-menu"></ul>
             </div>
             <button id="add-cascade-btn" class="icon-btn" title="Create New Cascade"><i class="fas fa-plus-square"></i></button>
             <button id="global-mute-btn" class="icon-btn" title="Mute All Sounds"><i class="fas fa-volume-up"></i></button>
-            <label for="load-file-input" class="icon-btn" title="Load from File">
-                <i class="fas fa-folder-open"></i>
-            </label>
+            <label for="load-file-input" class="icon-btn" title="Load from File"><i class="fas fa-folder-open"></i></label>
             <input type="file" id="load-file-input" class="d-none" accept=".json,.zip">
             <button id="save-all-btn" class="icon-btn" title="Save All to Zip"><i class="fas fa-save"></i></button>
             <button id="view-logs-btn" class="icon-btn" data-bs-toggle="modal" data-bs-target="#logsModal" title="View Logs"><i class="fas fa-file-alt"></i></button>
@@ -52,9 +48,7 @@
             <p>Create sequences of timers that run one after another.</p>
             <p>Click the <i class="fas fa-plus-square"></i> icon above to get started by creating your first cascade.</p>
         </div>
-        <div id="cascade-container">
-            <!-- Cascades will be dynamically injected here -->
-        </div>
+        <div id="cascade-container"></div>
     </main>
 
     <!-- Modals -->
@@ -68,23 +62,19 @@
                 </div>
                 <div class="modal-body">
                     <div class="cascade-edit-controls">
-                        <div class="form-group mb-3">
+                        <div class="form-group mb-3 flex-grow-1">
                             <label for="cascade-name-input" class="form-label">Cascade Name</label>
                             <input type="text" id="cascade-name-input" class="form-control" placeholder="Enter cascade name">
                         </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="cascade-repeat-toggle">
-                                <label class="form-check-label" for="cascade-repeat-toggle">Repeat</label>
-                            </div>
-                            <button id="delete-cascade-btn" class="icon-btn icon-btn-danger" title="Delete This Cascade"><i class="fas fa-trash"></i></button>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="cascade-repeat-toggle">
+                            <label class="form-check-label" for="cascade-repeat-toggle">Repeat</label>
                         </div>
+                        <button id="delete-cascade-btn" class="icon-btn" title="Delete This Cascade"><i class="fas fa-trash-alt icon-danger"></i></button>
                     </div>
                     <hr>
                     <h6>Timers</h6>
-                    <div id="timers-editor-list">
-                        <!-- Timer editor widgets will be injected here -->
-                    </div>
+                    <div id="timers-editor-list"></div>
                 </div>
                 <div class="modal-footer justify-content-between">
                     <button id="add-timer-btn-footer" class="btn btn-success"><i class="fas fa-plus"></i> Add New Timer</button>
