@@ -1,147 +1,276 @@
-/* General Body and Theme */
+/* Import Sci-Fi Font */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+:root {
+    --dark-bg: #1a1a1a;
+    --primary-widget-bg: #2c2c2c;
+    --secondary-widget-bg: #383838;
+    --border-color: #4a4a4a;
+    --text-color: #e0e0e0;
+    --accent-color: #00aaff;
+    --inactive-color: #6c757d;
+    --log-info: #cccccc;
+    --log-warn: #ffc107;
+    --log-error: #dc3545;
+}
+
 body {
-    background-color: #212529;
-    color: #f8f9fa;
+    background-color: var(--dark-bg);
+    color: var(--text-color);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding-top: 60px; /* Space for the sticky header */
 }
 
-.app-container {
-    max-width: 1200px;
+/* --- Main Header --- */
+#main-header {
+    background-color: var(--primary-widget-bg);
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    z-index: 1030;
+}
+
+.header-container {
+    max-width: 600px;
     margin: 0 auto;
-    padding: 20px;
-}
-
-/* Header Styles */
-.app-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    border-bottom: 2px solid #495057;
-    padding-bottom: 1rem;
+    padding: 0 15px;
+    transition: max-width 0.3s ease-in-out;
 }
 
-.app-header h1 {
-    color: #20c997;
+.app-title {
+    font-size: 1.5rem;
+    font-family: 'Orbitron', sans-serif;
+    margin: 0;
+    color: var(--accent-color);
+    font-weight: 700;
 }
 
-/* Timer Series Styles */
-.timer-series-container {
+#main-controls {
     display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    gap: 20px;
-    padding-bottom: 15px;
+    gap: 10px;
 }
 
-.timer-series {
-    flex: 0 0 100%;
-    scroll-snap-align: start;
-    background-color: #343a40;
-    border-radius: 15px;
-    padding: 20px;
-    border: 1px solid #495057;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.series-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.series-title {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #fff;
-}
-
-/* Timer Item Styles */
-.timers-list {
-    list-style: none;
-    padding: 0;
-}
-
-.timer-item {
-    background-color: #495057;
-    border-radius: 10px;
-    margin-bottom: 15px;
-    padding: 15px;
-    display: flex;
-    align-items: center;
-    transition: all 0.3s ease;
-    border-left: 5px solid transparent;
-}
-
-.timer-item.active {
-    background-color: #2a634e;
-    border-left-color: #20c997;
-    box-shadow: 0 0 15px rgba(32, 201, 151, 0.4);
-}
-
-.timer-name {
-    flex-grow: 1;
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
     font-size: 1.2rem;
-    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
-.timer-countdown {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 2rem;
+.icon-btn:hover, .icon-btn:focus {
+    background-color: var(--secondary-widget-bg);
+    color: var(--accent-color);
+}
+.icon-btn:disabled {
+    color: var(--inactive-color);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+.dropdown .icon-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+}
+
+/* --- Main Content & Cascade --- */
+#main-content {
+    padding: 20px 15px;
+}
+
+#welcome-message {
+    margin-top: 50px;
+    color: var(--inactive-color);
+}
+
+.cascade {
+    background-color: var(--primary-widget-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    max-width: 600px;
+    margin: 20px auto;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    display: none; /* Hidden by default */
+}
+.cascade.active {
+    display: block;
+}
+
+.cascade-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--secondary-widget-bg);
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 58px; /* Height of main header */
+    z-index: 1020;
+}
+
+.cascade-title {
+    font-size: 1.2rem;
     font-weight: bold;
-    color: #20c997;
-    min-width: 280px;
+    margin: 0;
+}
+.cascade-title .ordinal {
+    color: var(--accent-color);
+    margin-right: 10px;
+}
+
+.cascade-body {
+    padding: 10px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* --- Timer Widget --- */
+.timer-widget {
+    background-color: var(--secondary-widget-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease-in-out;
+    opacity: 0.5;
+    transform: scale(0.98);
+}
+
+.timer-widget.active {
+    opacity: 1;
+    transform: scale(1);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(0, 170, 255, 0.3);
+}
+
+.timer-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.timer-description {
+    font-size: 0.8rem;
+    color: var(--inactive-color);
+    margin-bottom: 10px;
+}
+
+.timer-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
     text-align: center;
+    letter-spacing: 2px;
+    color: var(--text-color);
+    margin: 10px 0;
+    text-shadow: 0 0 10px var(--accent-color);
 }
 
-.timer-item.paused .timer-countdown {
-    color: #ffc107;
+.timer-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.timer-controls button {
-    margin-left: 5px;
+.timer-controls .dropdown-menu {
+    background-color: var(--primary-widget-bg);
+    border: 1px solid var(--border-color);
+}
+.timer-controls .dropdown-item {
+    color: var(--text-color);
+}
+.timer-controls .dropdown-item:hover {
+    background-color: var(--secondary-widget-bg);
+    color: var(--accent-color);
 }
 
-/* Edit Mode Styles */
-.edit-mode .timer-item {
+/* --- Modals --- */
+.modal-content {
+    background-color: var(--primary-widget-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+.modal-header, .modal-footer {
+    border-bottom-color: var(--border-color);
+    border-top-color: var(--border-color);
+}
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Edit Modal */
+.form-control, .form-select {
+    background-color: var(--secondary-widget-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+.form-control:focus, .form-select:focus {
+    background-color: var(--secondary-widget-bg);
+    color: var(--text-color);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 5px rgba(0, 170, 255, 0.5);
+}
+
+.timer-editor {
+    background-color: var(--dark-bg);
+    border: 1px dashed var(--border-color);
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
     cursor: grab;
 }
 
-.edit-mode .timer-controls {
-    display: none;
-}
-
-.edit-mode .edit-controls {
+.time-input-group {
     display: flex;
-}
-
-.edit-controls {
-    display: none;
     align-items: center;
+    gap: 5px;
+}
+.time-input-container {
+    text-align: center;
+}
+.time-input-group input {
+    width: 50px;
+    text-align: center;
+}
+.time-spinner-btn {
+    font-size: 0.8rem;
+    line-height: 1;
+    padding: 2px 4px;
+    cursor: pointer;
+    background: var(--secondary-widget-bg);
+    border: none;
+    color: var(--text-color);
 }
 
-/* Scrollbar styling */
-.timer-series-container::-webkit-scrollbar {
-    height: 10px;
+/* Logs Modal */
+.accordion-item {
+    background-color: var(--dark-bg);
+    border-color: var(--border-color);
 }
-.timer-series-container::-webkit-scrollbar-track {
-    background: #2c3034;
+.accordion-button {
+    background-color: var(--secondary-widget-bg);
+    color: var(--text-color);
 }
-.timer-series-container::-webkit-scrollbar-thumb {
-    background-color: #20c997;
-    border-radius: 10px;
+.accordion-button:not(.collapsed) {
+    background-color: var(--primary-widget-bg);
+    color: var(--accent-color);
 }
-
-/* Utility classes */
-.form-control-dark {
-    background-color: #495057;
-    border-color: #6c757d;
-    color: #fff;
+.accordion-button:focus {
+    box-shadow: 0 0 5px rgba(0, 170, 255, 0.5);
 }
-.form-control-dark:focus {
-    background-color: #495057;
-    border-color: #20c997;
-    color: #fff;
-    box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.5);
+.log-entry {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
 }
+.log-info { color: var(--log-info); }
+.log-warn { color: var(--log-warn); }
+.log-error { color: var(--log-error); }
