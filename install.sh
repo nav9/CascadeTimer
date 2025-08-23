@@ -13,7 +13,7 @@ JSZIP_VERSION="3.10.1"
 
 # --- Directory Setup ---
 echo "--- Creating library directories ---"
-mkdir -p lib/bootstrap lib/jquery lib/fontawesome lib/jszip lib/webfonts
+mkdir -p lib/bootstrap lib/jquery lib/fontawesome lib/jszip lib/webfonts 
 echo "Directories created."
 
 # --- Helper Function for Downloading ---
