@@ -14,7 +14,7 @@ body {
     background-color: var(--dark-bg);
     color: var(--text-color);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
+    margin: 0; /* Ensures header is flush with the top */
     padding-top: 105px;
 }
 
@@ -50,7 +50,7 @@ body {
 .timer-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; color: var(--text-color); }
 .timer-display { font-weight: 600; font-size: 1.6rem; text-align: center; letter-spacing: 1px; margin-bottom: 15px; color: var(--inactive-color); transition: color 0.3s ease; }
 .timer-widget.running .timer-display { color: var(--accent-color); }
-.timer-widget.active { border-color: var(--accent-color); box-shadow: 0 0 15px rgba(0, 255, 127, 0.4); }
+.timer-widget.active.running { border-color: var(--accent-color); box-shadow: 0 0 15px rgba(0, 255, 127, 0.4); }
 .timer-controls { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
 .play-pause-btn { font-size: 1.5rem !important; }
 .play-pause-btn:disabled { color: #5a626d !important; background-color: transparent !important; cursor: not-allowed; }
@@ -61,7 +61,7 @@ body {
 .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
 .form-control, .form-select { background-color: var(--secondary-widget-bg); color: var(--text-color); border-color: var(--border-color); }
 .form-control:focus, .form-select:focus { border-color: var(--accent-color); box-shadow: 0 0 5px rgba(0, 255, 127, 0.5); }
-.cascade-edit-controls { display: flex; align-items: center; gap: 15px; }
+.cascade-edit-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
 .timer-editor { background-color: var(--dark-bg); border: 1px solid var(--border-color); padding: 10px 15px 15px 15px; border-radius: 5px; margin-bottom: 15px; }
 .drag-handle { cursor: grab; text-align: center; color: var(--inactive-color); margin-bottom: 5px; }
 .drag-handle:active { cursor: grabbing; }
@@ -73,16 +73,9 @@ body {
 .notification-controls .input-group { flex-basis: 120px; flex-grow: 1; }
 .notification-controls .form-check { margin-top: 5px; }
 .input-group-text { background-color: var(--dark-bg); border-color: var(--border-color); color: var(--inactive-color); }
-input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { 
-    -webkit-appearance: inner-spin-button !important;
-    opacity: 1;
-    filter: invert(1) grayscale(1) brightness(0.7);
-}
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: inner-spin-button !important; opacity: 1; filter: invert(1) grayscale(1) brightness(0.7); }
 
 /* --- Logs Modal --- */
-#logsModal .modal-content, #logsModal .accordion-item, #logsModal .accordion-button {
-    background-color: var(--dark-bg);
-    color: var(--text-color);
-}
+#logsModal .modal-content, #logsModal .accordion-item, #logsModal .accordion-button { background-color: var(--dark-bg); color: var(--text-color); }
 #logsModal .accordion-button:not(.collapsed) { background-color: var(--primary-widget-bg); color: var(--accent-color); }
 #logsModal .accordion-body { background-color: #1a1a1a; }

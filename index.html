@@ -66,9 +66,13 @@
                             <label for="cascade-name-input" class="form-label">Cascade Name</label>
                             <input type="text" id="cascade-name-input" class="form-control" placeholder="Enter cascade name">
                         </div>
-                        <div class="form-check form-switch">
+                        <div class="form-check form-switch" title="Repeat entire cascade when finished">
                             <input class="form-check-input" type="checkbox" id="cascade-repeat-toggle">
                             <label class="form-check-label" for="cascade-repeat-toggle">Repeat</label>
+                        </div>
+                         <div class="form-check form-switch" title="Allow this cascade to send desktop notifications">
+                            <input class="form-check-input" type="checkbox" id="cascade-notify-toggle">
+                            <label class="form-check-label" for="cascade-notify-toggle">Notify</label>
                         </div>
                         <button id="delete-cascade-btn" class="icon-btn" title="Delete This Cascade"><i class="fas fa-trash-alt icon-danger"></i></button>
                     </div>
@@ -86,23 +90,11 @@
             </div>
         </div>
     </div>
-
+    
     <!-- Other Modals (Unchanged) -->
-    <div class="modal fade" id="logsModal" tabindex="-1" aria-labelledby="logsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="logsModalLabel">Application Logs</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><div class="accordion" id="logs-accordion"></div></div></div>
-        </div>
-    </div>
-    <div class="modal fade" id="faqModal" tabindex="-1" aria-labelledby="faqModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="faqModalLabel">Frequently Asked Questions</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body" id="faq-content"></div></div>
-        </div>
-    </div>
-    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="confirmationModalLabel">Are you sure?</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body" id="confirmationModalBody">This action cannot be undone.</div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" id="confirm-action-btn" class="btn btn-danger">Confirm</button></div></div>
-        </div>
-    </div>
+    <div class="modal fade" id="logsModal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Application Logs</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="accordion" id="logs-accordion"></div></div></div></div></div>
+    <div class="modal fade" id="faqModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Frequently Asked Questions</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="faq-content"></div></div></div></div>
+    <div class="modal fade" id="confirmationModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Are you sure?</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="confirmationModalBody">This action cannot be undone.</div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" id="confirm-action-btn" class="btn btn-danger">Confirm</button></div></div></div></div>
 
     <!-- JavaScript Libraries -->
     <script src="lib/jquery/jquery.min.js"></script>
